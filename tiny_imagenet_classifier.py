@@ -60,9 +60,9 @@ Y_test = np_utils.to_categorical(y_test, num_classes)
 model = Sequential()
 # input: 64x64 images with 3 channels -> (3, 64, 64) tensors.
 # this applies 32 convolution filters of size 3x3 each.
-model.add(Convolution2D(32, 3, 3, border_mode='valid', input_shape=(num_channels,img_rows,img_cols)))
+model.add(Convolution2D(64, 3, 3, border_mode='valid', input_shape=(num_channels,img_rows,img_cols)))
 model.add(Activation('relu'))
-model.add(Convolution2D(32, 3, 3))
+model.add(Convolution2D(64, 3, 3))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
@@ -95,7 +95,7 @@ for loss_function in loss_functions:
 
     if loss_function=='categorical_crossentropy':
         #affine layer w/ softmax activation added 
-        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))#pretrained weights assume only 100 outputs, we need to train this layer from scratch
+        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
     else:
         model.add(Dense(num_classes,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
 
@@ -125,7 +125,7 @@ for loss_function in loss_functions:
 
     # df=datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True)
     
-    model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True),
+    model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True,# save_to_dir='./datagen/', save_prefix='datagen-',save_format='png'), # To save the images created by the generator
                 samples_per_epoch=num_samples, nb_epoch=nb_epoch,
                 verbose=1, validation_data=(X_test,Y_test), #df,nb_val_samples=len(X_train)-num_samples,
                 callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
