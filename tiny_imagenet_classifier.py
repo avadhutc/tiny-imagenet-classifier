@@ -19,7 +19,7 @@ from keras.utils import np_utils
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 from plotter import Plotter
-from keras.utils.visualize_util import plot
+# from keras.utils.visualize_util import plot
 
 #Custom
 from load_images import load_images
@@ -41,7 +41,8 @@ print('X_train shape:', X_train.shape)
 print(X_train.shape[0], 'train samples')
 print(X_test.shape[0], 'test samples')
 
-num_samples=round(len(X_train)*0.8)
+# num_samples=round(len(X_train)*0.8)
+num_samples=len(X_train)
 
 # input image dimensions
 num_channels , img_rows, img_cols = X_train.shape[1], X_train.shape[2], X_train.shape[3]
@@ -57,81 +58,26 @@ Y_test = np_utils.to_categorical(y_test, num_classes)
 
 #Define model
 model = Sequential()
-
-#conv-spatial batch norm - relu #1 
-model.add(ZeroPadding2D((2,2),input_shape=(3,64,64)))
-model.add(Convolution2D(64,5,5,subsample=(2,2),W_regularizer=WeightRegularizer(l1=1e-7,l2=1e-7)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
+# input: 64x64 images with 3 channels -> (3, 64, 64) tensors.
+# this applies 32 convolution filters of size 3x3 each.
+model.add(Convolution2D(32, 3, 3, border_mode='valid', input_shape=(num_channels,img_rows,img_cols)))
 model.add(Activation('relu'))
-print "added conv1"
-
-#conv-spatial batch norm - relu #2
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(64,3,3,subsample=(1,1)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
-print "added conv2"
-
-#conv-spatial batch norm - relu #3
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(128,3,3,subsample=(2,2)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
-model.add(Dropout(0.25)) 
-print "added conv3" 
-
-#conv-spatial batch norm - relu #4
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(128,3,3,subsample=(1,1)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
-print "added conv4" 
-
-#conv-spatial batch norm - relu #5
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(256,3,3,subsample=(2,2)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
-print "added conv5" 
-
-#conv-spatial batch norm - relu #6
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(256,3,3,subsample=(1,1)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
+model.add(Convolution2D(32, 3, 3))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
-print "added conv6" 
 
-#conv-spatial batch norm - relu #7
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(512,3,3,subsample=(2,2)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
-print "added conv7" 
-
-#conv-spatial batch norm - relu #8
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(512,3,3,subsample=(1,1)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
-print "added conv8" 
-
-
-#conv-spatial batch norm - relu #9
-model.add(ZeroPadding2D((1,1)))
-model.add(Convolution2D(1024,3,3,subsample=(2,2)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
+model.add(Convolution2D(64, 3, 3, border_mode='valid'))
 model.add(Activation('relu'))
-print "added conv9" 
-model.add(Dropout(0.25)) 
+model.add(Convolution2D(64, 3, 3))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.50))
 
-#Affine-spatial batch norm -relu #10 
 model.add(Flatten())
-model.add(Dense(512,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
-model.add(Activation('relu')) 
-print "added affine!" 
-model.add(Dropout(0.5))
+model.add(Dense(256,W_regularizer=WeightRegularizer(l1=1e-6,l2=1e-6)))
+model.add(Activation('relu'))
+model.add(Dropout(0.50))
 
 #SGD params
 sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True)
@@ -149,11 +95,12 @@ for loss_function in loss_functions:
 
     if loss_function=='categorical_crossentropy':
         #affine layer w/ softmax activation added 
-        model.add(Dense(200,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))#pretrained weights assume only 100 outputs, we need to train this layer from scratch
-        print "added final affine"
+        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))#pretrained weights assume only 100 outputs, we need to train this layer from scratch
+    else:
+        model.add(Dense(num_classes,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
 
     model.summary()
-    plot(model, to_file='model_'+loss_function+'_.png')
+    # plot(model, to_file='model_'+loss_function+'_.png')
     
     model.compile(loss=loss_function,
                   optimizer=sgd,
@@ -180,7 +127,7 @@ for loss_function in loss_functions:
     
     model.fit_generator(df,
                 samples_per_epoch=num_samples, nb_epoch=nb_epoch,
-                verbose=1, validation_data=df,nb_val_samples=len(X_train)-num_samples,
+                verbose=1, validation_data=(X_test,Y_test), #df,nb_val_samples=len(X_train)-num_samples,
                 callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
 
     # model.fit(X_train, Y_train, batch_size=64, nb_epoch=nb_epoch,
