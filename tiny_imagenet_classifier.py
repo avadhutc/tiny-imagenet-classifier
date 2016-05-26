@@ -55,42 +55,41 @@ X_test /= 255
 Y_train = np_utils.to_categorical(y_train, num_classes)
 Y_test = np_utils.to_categorical(y_test, num_classes)
 
-#Define model
-model = Sequential()
-# input: 64x64 images with 3 channels -> (3, 64, 64) tensors.
-# this applies 32 convolution filters of size 3x3 each.
-model.add(Convolution2D(64, 5, 5, border_mode='valid', input_shape=(num_channels,img_rows,img_cols), init='glorot_uniform'))
-model.add(Activation('relu'))
-# model.add(Convolution2D(32, 3, 3, init='glorot_uniform'))
-# model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
-
-model.add(Convolution2D(64, 5, 5, border_mode='valid', init='glorot_uniform'))
-model.add(Activation('relu'))
-# model.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
-# model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.5))
-
-model.add(Convolution2D(128, 5, 5, border_mode='valid', init='glorot_uniform'))
-model.add(Activation('relu'))
-# model.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
-# model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.5))
-
-model.add(Flatten())
-model.add(Dense(256,W_regularizer=WeightRegularizer(l1=1e-6,l2=1e-6), init='glorot_uniform'))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-
-#SGD params
-sgd = SGD(lr=0.1, decay=1e-4, momentum=0.9, nesterov=True)
-
 for loss_function in loss_functions:
     # for num_classes in num_classes_arr: # num classes loop
     
+    #Define model
+    model = Sequential()
+    # input: 64x64 images with 3 channels -> (3, 64, 64) tensors.
+    # this applies 32 convolution filters of size 3x3 each.
+    model.add(Convolution2D(64, 5, 5, border_mode='valid', input_shape=(num_channels,img_rows,img_cols), init='glorot_uniform'))
+    model.add(Activation('relu'))
+    # model.add(Convolution2D(32, 3, 3, init='glorot_uniform'))
+    # model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Convolution2D(64, 5, 5, border_mode='valid', init='glorot_uniform'))
+    model.add(Activation('relu'))
+    # model.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
+    # model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.5))
+
+    model.add(Convolution2D(128, 5, 5, border_mode='valid', init='glorot_uniform'))
+    model.add(Activation('relu'))
+    # model.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
+    # model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.5))
+
+    model.add(Flatten())
+    model.add(Dense(256,W_regularizer=WeightRegularizer(l1=1e-6,l2=1e-6), init='glorot_uniform'))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+
+    #SGD params
+    sgd = SGD(lr=0.1, decay=1e-4, momentum=0.9, nesterov=True)
 
     print()
     print()
@@ -128,9 +127,6 @@ for loss_function in loss_functions:
 
     fpath = 'loss-' + loss_function + str(num_classes)
     datagen.fit(X_train)
-
-    pathWeights='model'+loss_function+'.h5'
-    model.save_weights(pathWeights)
 
     # df=datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True)
     
