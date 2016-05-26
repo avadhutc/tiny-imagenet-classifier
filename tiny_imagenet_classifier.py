@@ -20,18 +20,17 @@ from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 from plotter import Plotter
 # from keras.utils.visualize_util import plot
+import h5py
 
 #Custom
 from load_images import load_images
 
 #Params
-# loss_functions = ['hinge', 'squared_hinge','categorical_crossentropy']
-loss_functions = ['categorical_crossentropy']
-num_classes = 2
-batch_size = 32
+loss_functions = ['hinge', 'squared_hinge','categorical_crossentropy']
+# loss_functions = ['categorical_crossentropy']
+num_classes = 20
+batch_size = num_classes
 nb_epoch = 100
-data_augmentation = True
-
 
 #Load images
 path='./tiny-imagenet-200'
@@ -60,27 +59,34 @@ Y_test = np_utils.to_categorical(y_test, num_classes)
 model = Sequential()
 # input: 64x64 images with 3 channels -> (3, 64, 64) tensors.
 # this applies 32 convolution filters of size 3x3 each.
-model.add(Convolution2D(64, 3, 3, border_mode='valid', input_shape=(num_channels,img_rows,img_cols)))
+model.add(Convolution2D(64, 5, 5, border_mode='valid', input_shape=(num_channels,img_rows,img_cols), init='glorot_uniform'))
 model.add(Activation('relu'))
-model.add(Convolution2D(64, 3, 3))
-model.add(Activation('relu'))
+# model.add(Convolution2D(32, 3, 3, init='glorot_uniform'))
+# model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
 
-model.add(Convolution2D(64, 3, 3, border_mode='valid'))
+model.add(Convolution2D(64, 5, 5, border_mode='valid', init='glorot_uniform'))
 model.add(Activation('relu'))
-model.add(Convolution2D(64, 3, 3))
-model.add(Activation('relu'))
+# model.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
+# model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.50))
+model.add(Dropout(0.5))
+
+model.add(Convolution2D(128, 5, 5, border_mode='valid', init='glorot_uniform'))
+model.add(Activation('relu'))
+# model.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
+# model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.5))
 
 model.add(Flatten())
-model.add(Dense(256,W_regularizer=WeightRegularizer(l1=1e-6,l2=1e-6)))
+model.add(Dense(256,W_regularizer=WeightRegularizer(l1=1e-6,l2=1e-6), init='glorot_uniform'))
 model.add(Activation('relu'))
-model.add(Dropout(0.50))
+model.add(Dropout(0.5))
 
 #SGD params
-sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True)
+sgd = SGD(lr=0.1, decay=1e-4, momentum=0.9, nesterov=True)
 
 for loss_function in loss_functions:
     # for num_classes in num_classes_arr: # num classes loop
@@ -95,9 +101,9 @@ for loss_function in loss_functions:
 
     if loss_function=='categorical_crossentropy':
         #affine layer w/ softmax activation added 
-        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
+        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5), init='glorot_uniform'))
     else:
-        model.add(Dense(num_classes,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
+        model.add(Dense(num_classes,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5), init='glorot_uniform'))
 
     model.summary()
     # plot(model, to_file='model_'+loss_function+'_.png')
@@ -113,19 +119,22 @@ for loss_function in loss_functions:
         featurewise_std_normalization=True,  # divide inputs by std of the dataset
         samplewise_std_normalization=False,  # divide each input by its std
         zca_whitening=False,  # apply ZCA whitening
-        rotation_range=0.,  # randomly rotate images in the range (degrees, 0 to 180)
+        rotation_range=10.,  # randomly rotate images in the range (degrees, 0 to 180)
         width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
         height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
         horizontal_flip=True,  # randomly flip images
         vertical_flip=False)  # randomly flip images
 
 
-    fpath = 'loss-' + loss_function + '-' + str(num_classes)
+    fpath = 'loss-' + loss_function + str(num_classes)
     datagen.fit(X_train)
+
+    pathWeights='model'+loss_function+'.h5'
+    model.save_weights(pathWeights)
 
     # df=datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True)
     
-    model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True,# save_to_dir='./datagen/', save_prefix='datagen-',save_format='png'), # To save the images created by the generator
+    model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True),# save_to_dir='./datagen/', save_prefix='datagen-',save_format='png'), # To save the images created by the generator
                 samples_per_epoch=num_samples, nb_epoch=nb_epoch,
                 verbose=1, validation_data=(X_test,Y_test), #df,nb_val_samples=len(X_train)-num_samples,
                 callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
@@ -140,3 +149,5 @@ for loss_function in loss_functions:
     print('Test score:', score[0])
     print('Test accuracy:', score[1])
 
+    pathWeights='model'+loss_function+'.h5'
+    model.save_weights(pathWeights)
