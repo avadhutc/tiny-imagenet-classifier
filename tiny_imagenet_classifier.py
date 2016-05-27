@@ -28,9 +28,9 @@ from load_images import load_images
 
 #Params
 loss_functions = ['categorical_crossentropy','squared_hinge','hinge']
-num_classes = 100
-batch_size = 128
-nb_epoch = 100
+num_classes = 200
+batch_size = 32
+nb_epoch = 30
 
 #Load images
 path='./tiny-imagenet-200'
@@ -60,65 +60,65 @@ for loss_function in loss_functions:
     model = Sequential()
     #conv-spatial batch norm - relu #1 
     model.add(ZeroPadding2D((2,2),input_shape=(3,64,64)))
-    model.add(Convolution2D(64,5,5,subsample=(2,2),W_regularizer=WeightRegularizer(l1=1e-7,l2=1e-7),init='glorot_uniform'))
+    model.add(Convolution2D(64,5,5,subsample=(2,2),W_regularizer=WeightRegularizer(l1=1e-7,l2=1e-7)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #2
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(64,3,3,subsample=(1,1),init='glorot_uniform'))
+    model.add(Convolution2D(64,3,3,subsample=(1,1)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #3
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(128,3,3,subsample=(2,2),init='glorot_uniform'))
+    model.add(Convolution2D(128,3,3,subsample=(2,2)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     model.add(Dropout(0.25)) 
 
     #conv-spatial batch norm - relu #4
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(128,3,3,subsample=(1,1),init='glorot_uniform'))
+    model.add(Convolution2D(128,3,3,subsample=(1,1)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #5
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(256,3,3,subsample=(2,2),init='glorot_uniform'))
+    model.add(Convolution2D(256,3,3,subsample=(2,2)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #6
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(256,3,3,subsample=(1,1),init='glorot_uniform'))
+    model.add(Convolution2D(256,3,3,subsample=(1,1)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     model.add(Dropout(0.25))
 
     #conv-spatial batch norm - relu #7
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(512,3,3,subsample=(2,2),init='glorot_uniform'))
+    model.add(Convolution2D(512,3,3,subsample=(2,2)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #8
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(512,3,3,subsample=(1,1),init='glorot_uniform'))
+    model.add(Convolution2D(512,3,3,subsample=(1,1)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     
 
     #conv-spatial batch norm - relu #9
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(1024,3,3,subsample=(2,2),init='glorot_uniform'))
+    model.add(Convolution2D(1024,3,3,subsample=(2,2)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu'))
     model.add(Dropout(0.25)) 
 
     #Affine-spatial batch norm -relu #10 
     model.add(Flatten())
-    model.add(Dense(512,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5),init='glorot_uniform'))
+    model.add(Dense(512,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     model.add(Dropout(0.5)) 
@@ -132,14 +132,14 @@ for loss_function in loss_functions:
 
     if loss_function=='categorical_crossentropy':
         #affine layer w/ softmax activation added 
-        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5), init='glorot_uniform'))
-        sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
+        sgd = SGD(lr=0.05, decay=1e-5, momentum=0.9, nesterov=True)
     else:
         if loss_function=='hinge':
-            sgd = SGD(lr=0.001, decay=1e-4, momentum=0.9, nesterov=True)
+            sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
         else:
             sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-        model.add(Dense(num_classes,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5), init='glorot_uniform'))
+        model.add(Dense(num_classes,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
 
 
     model.compile(loss=loss_function,
@@ -150,30 +150,30 @@ for loss_function in loss_functions:
     # plot(model, to_file='model_'+loss_function+'_.png')
 
 
-    datagen = ImageDataGenerator(
-        featurewise_center=True,  # set input mean to 0 over the dataset
-        samplewise_center=False,  # set each sample mean to 0
-        featurewise_std_normalization=True,  # divide inputs by std of the dataset
-        samplewise_std_normalization=False,  # divide each input by its std
-        zca_whitening=False,  # apply ZCA whitening
-        rotation_range=10.,  # randomly rotate images in the range (degrees, 0 to 180)
-        width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
-        height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
-        horizontal_flip=True,  # randomly flip images
-        vertical_flip=False)  # randomly flip images
+    # datagen = ImageDataGenerator(
+    #     featurewise_center=True,  # set input mean to 0 over the dataset
+    #     samplewise_center=False,  # set each sample mean to 0
+    #     featurewise_std_normalization=True,  # divide inputs by std of the dataset
+    #     samplewise_std_normalization=False,  # divide each input by its std
+    #     zca_whitening=False,  # apply ZCA whitening
+    #     rotation_range=10.,  # randomly rotate images in the range (degrees, 0 to 180)
+    #     width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+    #     height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+    #     horizontal_flip=True,  # randomly flip images
+    #     vertical_flip=False)  # randomly flip images
 
 
     fpath = 'loss-' + loss_function + '-' + str(num_classes)
-    datagen.fit(X_train)
+    # datagen.fit(X_train)
     
-    model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True, save_to_dir='./datagen/', save_prefix='datagen-',save_format='png'), # To save the images created by the generator
-                samples_per_epoch=num_samples, nb_epoch=nb_epoch,
-                verbose=1, validation_data=(X_test,Y_test),
-                callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
+    # model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True, save_to_dir='./datagen/', save_prefix='datagen-',save_format='png'), # To save the images created by the generator
+                # samples_per_epoch=num_samples, nb_epoch=nb_epoch,
+                # verbose=1, validation_data=(X_test,Y_test),
+                # callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
 
-    # model.fit(X_train, Y_train, batch_size=64, nb_epoch=nb_epoch,
-    #           verbose=1, validation_data=(X_test, Y_test),
-    #           callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
+    model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+              verbose=1, validation_data=(X_test, Y_test),
+              callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
 
 
 
