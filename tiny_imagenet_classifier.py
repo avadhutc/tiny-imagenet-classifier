@@ -118,8 +118,8 @@ for loss_function in loss_functions:
 
     #Affine-spatial batch norm -relu #10 
     model.add(Flatten())
-    model.add(Dense(512,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
-    model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9,init='glorot_uniform'))
+    model.add(Dense(512,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5),init='glorot_uniform'))
+    model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     model.add(Dropout(0.5)) 
 
