@@ -1,5 +1,6 @@
 '''Trains a convnet on the tiny imagenet dataset
 
+0.4 val acc after 20 epochs with 100 classes
 '''
 
 # System
@@ -26,10 +27,9 @@ import h5py
 from load_images import load_images
 
 #Params
-loss_functions = ['hinge', 'squared_hinge','categorical_crossentropy']
-# loss_functions = ['categorical_crossentropy']
-num_classes = 20
-batch_size = 64
+loss_functions = ['categorical_crossentropy','squared_hinge','hinge']
+num_classes = 100
+batch_size = 128
 nb_epoch = 100
 
 #Load images
@@ -40,7 +40,6 @@ print('X_train shape:', X_train.shape)
 print(X_train.shape[0], 'train samples')
 print(X_test.shape[0], 'test samples')
 
-# num_samples=round(len(X_train)*0.8)
 num_samples=len(X_train)
 
 # input image dimensions
@@ -61,74 +60,68 @@ for loss_function in loss_functions:
     model = Sequential()
     #conv-spatial batch norm - relu #1 
     model.add(ZeroPadding2D((2,2),input_shape=(3,64,64)))
-    model.add(Convolution2D(64,5,5,subsample=(2,2),W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
+    model.add(Convolution2D(64,5,5,subsample=(2,2),W_regularizer=WeightRegularizer(l1=1e-7,l2=1e-7),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #2
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(64,3,3,subsample=(1,1)))
+    model.add(Convolution2D(64,3,3,subsample=(1,1),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #3
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(128,3,3,subsample=(2,2)))
+    model.add(Convolution2D(128,3,3,subsample=(2,2),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     model.add(Dropout(0.25)) 
 
     #conv-spatial batch norm - relu #4
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(128,3,3,subsample=(1,1)))
+    model.add(Convolution2D(128,3,3,subsample=(1,1),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #5
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(256,3,3,subsample=(2,2)))
+    model.add(Convolution2D(256,3,3,subsample=(2,2),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #6
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(256,3,3,subsample=(1,1)))
+    model.add(Convolution2D(256,3,3,subsample=(1,1,init='glorot_uniform')))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     model.add(Dropout(0.25))
 
     #conv-spatial batch norm - relu #7
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(512,3,3,subsample=(2,2)))
+    model.add(Convolution2D(512,3,3,subsample=(2,2),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
 
     #conv-spatial batch norm - relu #8
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(512,3,3,subsample=(1,1)))
+    model.add(Convolution2D(512,3,3,subsample=(1,1),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu')) 
     
 
     #conv-spatial batch norm - relu #9
     model.add(ZeroPadding2D((1,1)))
-    model.add(Convolution2D(1024,3,3,subsample=(2,2)))
+    model.add(Convolution2D(1024,3,3,subsample=(2,2),init='glorot_uniform'))
     model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
     model.add(Activation('relu'))
     model.add(Dropout(0.25)) 
 
     #Affine-spatial batch norm -relu #10 
     model.add(Flatten())
-    model.add(Dense(512,W_regularizer=WeightRegularizer(l1=1e-4,l2=1e-4)))
-    model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9))
+    model.add(Dense(512,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
+    model.add(BatchNormalization(epsilon=1e-06, mode=0, axis=1, momentum=0.9,init='glorot_uniform'))
     model.add(Activation('relu')) 
     model.add(Dropout(0.5)) 
-
-    sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
-
-    model.compile(loss=loss_function,
-                  optimizer=sgd,
-                  metrics=['accuracy'])
 
     print()
     print()
@@ -139,19 +132,22 @@ for loss_function in loss_functions:
 
     if loss_function=='categorical_crossentropy':
         #affine layer w/ softmax activation added 
-        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5)))
+        model.add(Dense(num_classes,activation='softmax',W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5), init='glorot_uniform'))
+        sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
     else:
         if loss_function=='hinge':
-            #SGD params
+            sgd = SGD(lr=0.001, decay=1e-4, momentum=0.9, nesterov=True)
+        else:
             sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
         model.add(Dense(num_classes,W_regularizer=WeightRegularizer(l1=1e-5,l2=1e-5), init='glorot_uniform'))
 
-    model.summary()
-    # plot(model, to_file='model_'+loss_function+'_.png')
-    
+
     model.compile(loss=loss_function,
                   optimizer=sgd,
                   metrics=['accuracy'])
+
+    model.summary()
+    # plot(model, to_file='model_'+loss_function+'_.png')
 
 
     datagen = ImageDataGenerator(
@@ -169,12 +165,10 @@ for loss_function in loss_functions:
 
     fpath = 'loss-' + loss_function + '-' + str(num_classes)
     datagen.fit(X_train)
-
-    # df=datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True)
     
     model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size, shuffle=True, save_to_dir='./datagen/', save_prefix='datagen-',save_format='png'), # To save the images created by the generator
                 samples_per_epoch=num_samples, nb_epoch=nb_epoch,
-                verbose=1, validation_data=(X_test,Y_test), #df,nb_val_samples=len(X_train)-num_samples,
+                verbose=1, validation_data=(X_test,Y_test),
                 callbacks=[Plotter(show_regressions=False, save_to_filepath=fpath, show_plot_window=False)])
 
     # model.fit(X_train, Y_train, batch_size=64, nb_epoch=nb_epoch,
